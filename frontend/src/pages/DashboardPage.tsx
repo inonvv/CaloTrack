@@ -95,6 +95,11 @@ export default function DashboardPage() {
     },
   })
 
+  const deleteFood = useMutation({
+    mutationFn: (id: number) => api.delete(`/daily/food/${id}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['daily'] }),
+  })
+
   const addExercise = useMutation({
     mutationFn: (body: { type: string; duration_min: number }) =>
       api.post('/daily/exercise', body),
@@ -209,10 +214,19 @@ export default function DashboardPage() {
                   key={e.id}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="flex items-center justify-between px-3 py-2 text-sm bg-background"
+                  className="flex items-center justify-between px-3 py-2 text-sm bg-background group"
                 >
                   <span>{e.name}</span>
-                  <span className="text-muted-foreground">{e.calories} kcal</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground">{e.calories} kcal</span>
+                    <button
+                      onClick={() => deleteFood.mutate(e.id)}
+                      className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity text-xs px-1"
+                      aria-label="Remove"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </motion.li>
               ))}
             </ul>

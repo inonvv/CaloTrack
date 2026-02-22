@@ -85,6 +85,34 @@ async def add_exercise(
     return entry
 
 
+@router.delete("/food/{entry_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_food(
+    entry_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    profile = await _require_profile(db, current_user.id)
+
+    result = await db.execute(
+        select(FoodEntry)
+        .join(DailyLog)
+        .where(FoodEntry.id == entry_id, DailyLog.user_id == current_user.id)
+    )
+    entry = result.scalar_one_or_none()
+    if not entry:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Entry not found")
+
+    log_result = await db.execute(select(DailyLog).where(DailyLog.id == entry.daily_log_id))
+    log = log_result.scalar_one()
+
+    log.total_consumed = round(max(log.total_consumed - entry.calories, 0), 2)
+    log.net_calories = round(log.total_consumed - log.total_burned, 2)
+    log.status = calculate_status(log.net_calories, profile.daily_target)
+
+    await db.delete(entry)
+    await db.commit()
+
+
 @router.get("/history", response_model=list[DailySummary])
 async def get_history(
     current_user: User = Depends(get_current_user),
