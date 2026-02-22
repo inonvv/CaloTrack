@@ -32,17 +32,13 @@ interface DailyLog {
 
 // ── Constants ──────────────────────────────────────────────────────────────
 
-const STATUS_COLOR = {
-  deficit: 'text-blue-600',
-  maintenance: 'text-green-600',
-  surplus: 'text-orange-500',
+const STATUS_STYLE = {
+  deficit:     { bg: 'bg-blue-50 border-blue-200',   text: 'text-blue-700',   bar: 'bg-blue-400' },
+  maintenance: { bg: 'bg-green-50 border-green-200', text: 'text-green-700',  bar: 'bg-green-400' },
+  surplus:     { bg: 'bg-orange-50 border-orange-200', text: 'text-orange-600', bar: 'bg-orange-400' },
 }
 
-const STATUS_BG = {
-  deficit: 'bg-blue-50 border-blue-200',
-  maintenance: 'bg-green-50 border-green-200',
-  surplus: 'bg-orange-50 border-orange-200',
-}
+const STATUS_EMOJI = { deficit: '📉', maintenance: '✅', surplus: '📈' }
 
 const GROUPED = groupedExercises()
 const DEFAULT_EXERCISE = 'walking'
@@ -153,259 +149,289 @@ export default function DashboardPage() {
     )
   }
 
+  const target = profile?.daily_target ?? 2000
+  const consumedPct = Math.min(100, Math.round((log.total_consumed / target) * 100))
+  const style = STATUS_STYLE[log.status]
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-background max-w-md mx-auto px-4 py-6">
+    <div className="min-h-screen bg-muted/20">
+      <div className="max-w-md mx-auto px-4 py-6 space-y-4">
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">{t('dashboard.title')}</h1>
-        <div className="flex gap-2 items-center">
-          <button
-            onClick={() => i18n.changeLanguage(i18n.language === 'he' ? 'en' : 'he')}
-            className="text-xs border rounded px-2 py-1 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {i18n.language === 'he' ? 'EN' : 'עב'}
-          </button>
-          <button
-            onClick={() => { logout(); navigate('/login') }}
-            className="text-xs text-muted-foreground hover:text-foreground px-1"
-          >
-            ✕
-          </button>
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">🔥</span>
+            <h1 className="text-xl font-bold tracking-tight">CaloTrack</h1>
+          </div>
+          <div className="flex gap-2 items-center">
+            <button
+              onClick={() => i18n.changeLanguage(i18n.language === 'he' ? 'en' : 'he')}
+              className="text-xs border rounded-lg px-2.5 py-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            >
+              {i18n.language === 'he' ? 'EN' : 'עב'}
+            </button>
+            <button
+              onClick={() => { logout(); navigate('/login') }}
+              className="text-xs text-muted-foreground hover:text-foreground border rounded-lg px-2.5 py-1 hover:bg-muted transition-colors"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
-      </div>
 
-      {/* Status */}
-      <motion.div
-        key={log.status}
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className={`border rounded-xl px-4 py-3 text-center mb-5 ${STATUS_BG[log.status]}`}
-      >
-        <p className={`text-lg font-semibold ${STATUS_COLOR[log.status]}`}>
-          {t(`dashboard.status.${log.status}`)}
-        </p>
-        {profile && (
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {Math.round(log.net_calories)} / {Math.round(profile.daily_target)} kcal target
-          </p>
-        )}
-      </motion.div>
+        {/* Status card */}
+        <motion.div
+          key={log.status}
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className={`border rounded-2xl p-4 ${style.bg}`}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className={`text-lg font-bold ${style.text}`}>
+                {STATUS_EMOJI[log.status]} {t(`dashboard.status.${log.status}`)}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {Math.round(log.net_calories)} / {Math.round(target)} kcal target
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-bold tabular-nums">{consumedPct}%</p>
+              <p className="text-xs text-muted-foreground">consumed</p>
+            </div>
+          </div>
+          {/* Progress bar */}
+          <div className="h-2 bg-white/60 rounded-full overflow-hidden">
+            <motion.div
+              className={`h-full rounded-full ${style.bar}`}
+              initial={{ width: 0 }}
+              animate={{ width: `${consumedPct}%` }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
+            />
+          </div>
+        </motion.div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-3 mb-5">
-        <StatCard label={t('dashboard.consumed')} value={log.total_consumed} color="default" />
-        <StatCard label={t('dashboard.burned')} value={log.total_burned} color="blue" />
-        <StatCard label={t('dashboard.net')} value={log.net_calories} color="default" />
-      </div>
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-3">
+          <StatCard label={t('dashboard.consumed')} value={log.total_consumed} />
+          <StatCard label={t('dashboard.burned')} value={log.total_burned} color="blue" />
+          <StatCard label={t('dashboard.net')} value={log.net_calories} />
+        </div>
 
-      {/* Food log */}
-      <AnimatePresence>
-        {log.food_entries.length > 0 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-3">
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-1 px-1">
-              Food
-            </p>
-            <ul className="divide-y rounded-lg border overflow-hidden">
-              {log.food_entries.map((e) => (
-                <motion.li
-                  key={e.id}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="flex items-center justify-between px-3 py-2 text-sm bg-background group"
-                >
-                  <span>{e.name}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">{e.calories} kcal</span>
-                    <button
-                      onClick={() => deleteFood.mutate(e.id)}
-                      className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity text-xs px-1"
-                      aria-label="Remove"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                </motion.li>
-              ))}
-            </ul>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        {/* Food log */}
+        <AnimatePresence>
+          {log.food_entries.length > 0 && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <SectionLabel>🍽 Food</SectionLabel>
+              <ul className="divide-y rounded-xl border overflow-hidden bg-card shadow-sm">
+                {log.food_entries.map((e) => (
+                  <motion.li
+                    key={e.id}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 8 }}
+                    className="flex items-center justify-between px-3 py-2.5 text-sm"
+                  >
+                    <span className="font-medium">{e.name}</span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-muted-foreground text-xs">{e.calories} kcal</span>
+                      <button
+                        onClick={() => deleteFood.mutate(e.id)}
+                        className="w-5 h-5 rounded-full flex items-center justify-center text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors text-xs"
+                        aria-label="Remove"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </motion.li>
+                ))}
+              </ul>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-      {/* Exercise log */}
-      <AnimatePresence>
-        {log.exercise_entries.length > 0 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-3">
-            <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-1 px-1">
-              Exercise
-            </p>
-            <ul className="divide-y rounded-lg border overflow-hidden">
-              {log.exercise_entries.map((e) => (
-                <motion.li
-                  key={e.id}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="flex items-center justify-between px-3 py-2 text-sm bg-background"
-                >
-                  <span className="capitalize">{e.type.replace(/_/g, ' ')} · {e.duration_min} min</span>
-                  <span className="text-blue-600 font-medium">−{Math.round(e.calories_burned)} kcal</span>
-                </motion.li>
-              ))}
-            </ul>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        {/* Exercise log */}
+        <AnimatePresence>
+          {log.exercise_entries.length > 0 && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <SectionLabel>🏃 Exercise</SectionLabel>
+              <ul className="divide-y rounded-xl border overflow-hidden bg-card shadow-sm">
+                {log.exercise_entries.map((e) => (
+                  <motion.li
+                    key={e.id}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="flex items-center justify-between px-3 py-2.5 text-sm"
+                  >
+                    <span className="font-medium capitalize">{e.type.replace(/_/g, ' ')} · {e.duration_min} min</span>
+                    <span className="text-blue-600 font-semibold text-xs shrink-0">−{Math.round(e.calories_burned)} kcal</span>
+                  </motion.li>
+                ))}
+              </ul>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-      {/* Add buttons */}
-      <AnimatePresence mode="wait">
-        {activeForm === 'none' && (
-          <motion.div
-            key="buttons"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="grid grid-cols-2 gap-3 mt-4"
-          >
-            <button
-              onClick={() => setActiveForm('food')}
-              className="border-2 border-dashed rounded-xl py-3 text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+        {/* Add buttons / forms */}
+        <AnimatePresence mode="wait">
+          {activeForm === 'none' && (
+            <motion.div
+              key="buttons"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="grid grid-cols-2 gap-3 pt-1"
             >
-              🍽 {t('dashboard.addFood')}
-            </button>
-            <button
-              onClick={() => setActiveForm('exercise')}
-              className="border-2 border-dashed rounded-xl py-3 text-sm text-muted-foreground hover:border-blue-400 hover:text-blue-600 transition-colors"
-            >
-              🔥 {t('dashboard.addExercise')}
-            </button>
-          </motion.div>
-        )}
+              <button
+                onClick={() => setActiveForm('food')}
+                className="flex flex-col items-center gap-1 bg-card border rounded-xl py-4 text-sm hover:border-primary hover:bg-primary/5 transition-colors shadow-sm"
+              >
+                <span className="text-xl">🍽</span>
+                <span className="font-medium text-xs">{t('dashboard.addFood')}</span>
+              </button>
+              <button
+                onClick={() => setActiveForm('exercise')}
+                className="flex flex-col items-center gap-1 bg-card border rounded-xl py-4 text-sm hover:border-blue-400 hover:bg-blue-50 transition-colors shadow-sm"
+              >
+                <span className="text-xl">🏃</span>
+                <span className="font-medium text-xs">{t('dashboard.addExercise')}</span>
+              </button>
+            </motion.div>
+          )}
 
-        {/* Food form */}
-        {activeForm === 'food' && (
-          <motion.form
-            key="food-form"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            onSubmit={(e) => { e.preventDefault(); addFood.mutate({ name: foodName, calories: Number(foodCal) }) }}
-            className="space-y-3 border rounded-xl p-4 mt-4"
-          >
-            <p className="text-sm font-medium">🍽 Add food</p>
-            <FoodSearch value={foodName} onChange={handleFoodNameChange} onSelect={handleSelectFood} placeholder={t('food.name')} />
-            {baseCalories > 0 ? (
+          {/* Food form */}
+          {activeForm === 'food' && (
+            <motion.form
+              key="food-form"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              onSubmit={(e) => { e.preventDefault(); addFood.mutate({ name: foodName, calories: Number(foodCal) }) }}
+              className="bg-card border rounded-xl p-4 space-y-3 shadow-sm"
+            >
+              <p className="text-sm font-semibold">🍽 Add food</p>
+              <FoodSearch value={foodName} onChange={handleFoodNameChange} onSelect={handleSelectFood} placeholder={t('food.name')} />
+              {baseCalories > 0 ? (
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-muted-foreground shrink-0">Qty</label>
+                  <input
+                    type="number" value={quantity} onChange={(e) => handleQuantityChange(e.target.value)}
+                    className="w-20 border rounded-lg px-2 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-ring"
+                    min={0.25} step={0.25}
+                  />
+                  <span className="text-xs text-muted-foreground shrink-0">
+                    × {baseCalories} kcal{serving ? ` / ${serving}` : ''}
+                  </span>
+                  <span className="ml-auto text-sm font-bold shrink-0">{foodCal} kcal</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number" placeholder={t('food.calories')} value={foodCal}
+                    onChange={(e) => setFoodCal(e.target.value)}
+                    className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    required min={1}
+                  />
+                  <span className="text-sm text-muted-foreground shrink-0">kcal</span>
+                </div>
+              )}
+              <div className="flex gap-2 pt-1">
+                <button type="submit" disabled={addFood.isPending || !foodName || !foodCal}
+                  className="flex-1 bg-primary text-primary-foreground py-2 rounded-lg text-sm font-medium disabled:opacity-40 hover:opacity-90 transition-opacity">
+                  {addFood.isPending ? '…' : t('common.save')}
+                </button>
+                <button type="button" onClick={resetFoodForm}
+                  className="flex-1 border py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                  {t('common.cancel')}
+                </button>
+              </div>
+            </motion.form>
+          )}
+
+          {/* Exercise form */}
+          {activeForm === 'exercise' && (
+            <motion.form
+              key="exercise-form"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              onSubmit={(e) => {
+                e.preventDefault()
+                addExercise.mutate({ type: exType, duration_min: Number(exDuration) })
+              }}
+              className="bg-card border rounded-xl p-4 space-y-3 shadow-sm"
+            >
+              <p className="text-sm font-semibold">🏃 Log activity</p>
+
+              <select
+                value={exType}
+                onChange={(e) => setExType(e.target.value)}
+                className="input"
+              >
+                {Object.entries(GROUPED).map(([category, items]) => (
+                  <optgroup key={category} label={category}>
+                    {items.map((ex) => (
+                      <option key={ex.type} value={ex.type}>{ex.label}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+
               <div className="flex items-center gap-2">
-                <label className="text-xs text-muted-foreground shrink-0">Qty</label>
                 <input
-                  type="number" value={quantity} onChange={(e) => handleQuantityChange(e.target.value)}
-                  className="w-20 border rounded-md px-2 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-ring"
-                  min={0.25} step={0.25}
+                  type="number" value={exDuration}
+                  onChange={(e) => setExDuration(e.target.value)}
+                  className="w-24 border rounded-lg px-3 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-ring"
+                  min={1} max={600} required
                 />
-                <span className="text-xs text-muted-foreground shrink-0">
-                  × {baseCalories} kcal{serving ? ` / ${serving}` : ''}
-                </span>
-                <span className="ml-auto text-sm font-semibold shrink-0">= {foodCal} kcal</span>
+                <span className="text-sm text-muted-foreground">minutes</span>
               </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <input
-                  type="number" placeholder={t('food.calories')} value={foodCal}
-                  onChange={(e) => setFoodCal(e.target.value)}
-                  className="flex-1 border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                  required min={1}
-                />
-                <span className="text-sm text-muted-foreground shrink-0">kcal</span>
+
+              {burnPreview > 0 && (
+                <div className="flex items-center justify-between rounded-lg bg-blue-50 border border-blue-200 px-3 py-2">
+                  <span className="text-xs text-muted-foreground">
+                    Estimated burn{profile ? ` · based on ${profile.weight}kg` : ''}
+                  </span>
+                  <span className="text-sm font-bold text-blue-600">−{burnPreview} kcal</span>
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-1">
+                <button type="submit" disabled={addExercise.isPending || !exDuration}
+                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-40 hover:bg-blue-700 transition-colors">
+                  {addExercise.isPending ? '…' : 'Log activity'}
+                </button>
+                <button type="button"
+                  onClick={() => { setActiveForm('none'); setExType(DEFAULT_EXERCISE); setExDuration('30') }}
+                  className="flex-1 border py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+                  {t('common.cancel')}
+                </button>
               </div>
-            )}
-            <div className="flex gap-2">
-              <button type="submit" disabled={addFood.isPending || !foodName || !foodCal}
-                className="flex-1 bg-primary text-primary-foreground py-2 rounded-md text-sm font-medium disabled:opacity-40">
-                {addFood.isPending ? '…' : t('common.save')}
-              </button>
-              <button type="button" onClick={resetFoodForm}
-                className="flex-1 border py-2 rounded-md text-sm text-muted-foreground hover:text-foreground">
-                {t('common.cancel')}
-              </button>
-            </div>
-          </motion.form>
-        )}
-
-        {/* Exercise form */}
-        {activeForm === 'exercise' && (
-          <motion.form
-            key="exercise-form"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            onSubmit={(e) => {
-              e.preventDefault()
-              addExercise.mutate({ type: exType, duration_min: Number(exDuration) })
-            }}
-            className="space-y-3 border rounded-xl p-4 mt-4"
-          >
-            <p className="text-sm font-medium">🔥 Log activity</p>
-
-            {/* Exercise selector grouped by category */}
-            <select
-              value={exType}
-              onChange={(e) => setExType(e.target.value)}
-              className="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring bg-background"
-            >
-              {Object.entries(GROUPED).map(([category, items]) => (
-                <optgroup key={category} label={category}>
-                  {items.map((ex) => (
-                    <option key={ex.type} value={ex.type}>{ex.label}</option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-
-            {/* Duration */}
-            <div className="flex items-center gap-2">
-              <input
-                type="number" value={exDuration}
-                onChange={(e) => setExDuration(e.target.value)}
-                className="w-24 border rounded-md px-3 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-ring"
-                min={1} max={600} required
-              />
-              <span className="text-sm text-muted-foreground">minutes</span>
-            </div>
-
-            {/* Live burn preview */}
-            {burnPreview > 0 && (
-              <div className="flex items-center justify-between rounded-lg bg-blue-50 border border-blue-200 px-3 py-2">
-                <span className="text-xs text-muted-foreground">
-                  Estimated burn{profile ? ` · based on ${profile.weight}kg` : ''}
-                </span>
-                <span className="text-sm font-semibold text-blue-600">−{burnPreview} kcal</span>
-              </div>
-            )}
-
-            <div className="flex gap-2">
-              <button type="submit" disabled={addExercise.isPending || !exDuration}
-                className="flex-1 bg-blue-600 text-white py-2 rounded-md text-sm font-medium disabled:opacity-40">
-                {addExercise.isPending ? '…' : 'Log activity'}
-              </button>
-              <button type="button"
-                onClick={() => { setActiveForm('none'); setExType(DEFAULT_EXERCISE); setExDuration('30') }}
-                className="flex-1 border py-2 rounded-md text-sm text-muted-foreground hover:text-foreground">
-                {t('common.cancel')}
-              </button>
-            </div>
-          </motion.form>
-        )}
-      </AnimatePresence>
+            </motion.form>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   )
 }
 
-function StatCard({ label, value, color }: { label: string; value: number; color: 'default' | 'blue' }) {
+// ── Sub-components ──────────────────────────────────────────────────────────
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="border rounded-lg p-3 text-center">
-      <p className="text-xs text-muted-foreground mb-1">{label}</p>
-      <p className={`text-lg font-semibold ${color === 'blue' ? 'text-blue-600' : ''}`}>
+    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5 px-1">
+      {children}
+    </p>
+  )
+}
+
+function StatCard({ label, value, color }: { label: string; value: number; color?: 'blue' }) {
+  return (
+    <div className="bg-card border rounded-xl p-3 text-center shadow-sm">
+      <p className="text-xs text-muted-foreground mb-1 truncate">{label}</p>
+      <p className={`text-lg font-bold tabular-nums ${color === 'blue' ? 'text-blue-600' : ''}`}>
         {Math.round(value)}
       </p>
       <p className="text-xs text-muted-foreground">kcal</p>

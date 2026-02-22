@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { motion } from 'framer-motion'
 import { api } from '@/lib/api'
 
 type Gender = 'male' | 'female'
@@ -46,102 +47,124 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
-      <form onSubmit={submit} className="w-full max-w-sm space-y-4">
-        <div>
-          <h1 className="text-2xl font-bold">{t('onboarding.title')}</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted/40 px-4 py-8">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="w-full max-w-sm"
+      >
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="text-5xl mb-3">📋</div>
+          <h1 className="text-2xl font-bold tracking-tight">{t('onboarding.title')}</h1>
           <p className="text-sm text-muted-foreground mt-1">{t('onboarding.subtitle')}</p>
         </div>
-        {error && <p className="text-destructive text-sm">{error}</p>}
 
-        <Field label={t('onboarding.height')}>
-          <input
-            type="number"
-            value={form.height}
-            onChange={(e) => set('height', e.target.value)}
-            className="input"
-            required
-            min={50}
-            max={300}
-          />
-        </Field>
+        <form onSubmit={submit} className="space-y-4">
+          {error && (
+            <div className="bg-destructive/10 text-destructive text-sm rounded-lg px-3 py-2">
+              {error}
+            </div>
+          )}
 
-        <Field label={t('onboarding.weight')}>
-          <input
-            type="number"
-            value={form.weight}
-            onChange={(e) => set('weight', e.target.value)}
-            className="input"
-            required
-            min={20}
-            max={500}
-          />
-        </Field>
+          {/* Body measurements */}
+          <div className="bg-card border rounded-2xl shadow-sm p-4 space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Body</p>
+            <div className="grid grid-cols-3 gap-3">
+              <Field label={`${t('onboarding.height')} (cm)`}>
+                <input
+                  type="number" value={form.height}
+                  onChange={(e) => set('height', e.target.value)}
+                  className="input text-center" required min={50} max={300} placeholder="175"
+                />
+              </Field>
+              <Field label={`${t('onboarding.weight')} (kg)`}>
+                <input
+                  type="number" value={form.weight}
+                  onChange={(e) => set('weight', e.target.value)}
+                  className="input text-center" required min={20} max={500} placeholder="70"
+                />
+              </Field>
+              <Field label={`${t('onboarding.age')} (yr)`}>
+                <input
+                  type="number" value={form.age}
+                  onChange={(e) => set('age', e.target.value)}
+                  className="input text-center" required min={10} max={120} placeholder="25"
+                />
+              </Field>
+            </div>
 
-        <Field label={t('onboarding.age')}>
-          <input
-            type="number"
-            value={form.age}
-            onChange={(e) => set('age', e.target.value)}
-            className="input"
-            required
-            min={10}
-            max={120}
-          />
-        </Field>
+            <Field label={t('onboarding.gender')}>
+              <div className="grid grid-cols-2 gap-2">
+                {(['male', 'female'] as Gender[]).map((g) => (
+                  <button
+                    key={g} type="button"
+                    onClick={() => set('gender', g)}
+                    className={`py-2 rounded-lg text-sm font-medium border transition-colors ${
+                      form.gender === g
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-background border-border text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {g === 'male' ? `♂ ${t('onboarding.male')}` : `♀ ${t('onboarding.female')}`}
+                  </button>
+                ))}
+              </div>
+            </Field>
+          </div>
 
-        <Field label={t('onboarding.gender')}>
-          <select
-            value={form.gender}
-            onChange={(e) => set('gender', e.target.value)}
-            className="input"
+          {/* Lifestyle */}
+          <div className="bg-card border rounded-2xl shadow-sm p-4 space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Lifestyle</p>
+            <Field label={t('onboarding.activityLevel')}>
+              <select value={form.activity_level} onChange={(e) => set('activity_level', e.target.value)} className="input">
+                <option value="sedentary">{t('onboarding.sedentary')}</option>
+                <option value="light">{t('onboarding.light')}</option>
+                <option value="moderate">{t('onboarding.moderate')}</option>
+                <option value="active">{t('onboarding.active')}</option>
+              </select>
+            </Field>
+            <Field label={t('onboarding.goal')}>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { value: 'lose', label: '📉 Lose', t: t('onboarding.lose') },
+                  { value: 'maintain', label: '⚖️ Maintain', t: t('onboarding.maintain') },
+                  { value: 'gain', label: '📈 Gain', t: t('onboarding.gain') },
+                ] as { value: Goal; label: string; t: string }[]).map((g) => (
+                  <button
+                    key={g.value} type="button"
+                    onClick={() => set('goal', g.value)}
+                    className={`py-2 rounded-lg text-xs font-medium border transition-colors ${
+                      form.goal === g.value
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-background border-border text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {g.t}
+                  </button>
+                ))}
+              </div>
+            </Field>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-primary text-primary-foreground h-11 rounded-xl text-sm font-semibold disabled:opacity-50 hover:opacity-90 transition-opacity"
           >
-            <option value="male">{t('onboarding.male')}</option>
-            <option value="female">{t('onboarding.female')}</option>
-          </select>
-        </Field>
-
-        <Field label={t('onboarding.activityLevel')}>
-          <select
-            value={form.activity_level}
-            onChange={(e) => set('activity_level', e.target.value)}
-            className="input"
-          >
-            <option value="sedentary">{t('onboarding.sedentary')}</option>
-            <option value="light">{t('onboarding.light')}</option>
-            <option value="moderate">{t('onboarding.moderate')}</option>
-            <option value="active">{t('onboarding.active')}</option>
-          </select>
-        </Field>
-
-        <Field label={t('onboarding.goal')}>
-          <select
-            value={form.goal}
-            onChange={(e) => set('goal', e.target.value)}
-            className="input"
-          >
-            <option value="lose">{t('onboarding.lose')}</option>
-            <option value="maintain">{t('onboarding.maintain')}</option>
-            <option value="gain">{t('onboarding.gain')}</option>
-          </select>
-        </Field>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-primary text-primary-foreground py-2 rounded-md text-sm font-medium disabled:opacity-50"
-        >
-          {loading ? t('common.loading') : t('onboarding.next')}
-        </button>
-      </form>
+            {loading ? t('common.loading') : t('onboarding.next')}
+          </button>
+        </form>
+      </motion.div>
     </div>
   )
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-1">
-      <label className="text-sm font-medium">{label}</label>
+    <div className="space-y-1.5">
+      <label className="text-xs font-medium text-muted-foreground">{label}</label>
       {children}
     </div>
   )
