@@ -12,7 +12,8 @@
       "Bash(cd /c/Users/inon/working-projects/CaloTrack && docker compose restart frontend 2>&1)",
       "Bash(cd /c/Users/inon/working-projects/CaloTrack && docker compose restart backend frontend 2>&1 && sleep 4 && docker compose logs backend --tail=10 2>&1)",
       "Bash(cd:*)",
-      "Bash(head:*)"
+      "Bash(head:*)",
+      "Bash(cd /c/Users/inon/working-projects/CaloTrack && gh repo create CaloTrack --public --source=. --remote=origin --push 2>&1)"
     ]
   }
 }
