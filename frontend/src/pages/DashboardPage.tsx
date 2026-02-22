@@ -61,6 +61,7 @@ export default function DashboardPage() {
   const [foodName, setFoodName] = useState('')
   const [foodCal, setFoodCal] = useState('')
   const [baseCalories, setBaseCalories] = useState(0)
+  const [serving, setServing] = useState('')
   const [quantity, setQuantity] = useState('1')
 
   // Exercise form state
@@ -110,13 +111,14 @@ export default function DashboardPage() {
   function handleSelectFood(food: FoodItem) {
     setFoodName(food.name)
     setBaseCalories(food.calories)
+    setServing(food.serving)
     setQuantity('1')
     setFoodCal(String(food.calories))
   }
 
   function handleFoodNameChange(name: string) {
     setFoodName(name)
-    if (baseCalories > 0) { setBaseCalories(0); setQuantity('1') }
+    if (baseCalories > 0) { setBaseCalories(0); setServing(''); setQuantity('1') }
   }
 
   function handleQuantityChange(q: string) {
@@ -126,7 +128,7 @@ export default function DashboardPage() {
   }
 
   function resetFoodForm() {
-    setFoodName(''); setFoodCal(''); setBaseCalories(0); setQuantity('1')
+    setFoodName(''); setFoodCal(''); setBaseCalories(0); setServing(''); setQuantity('1')
     setActiveForm('none')
   }
 
@@ -287,7 +289,9 @@ export default function DashboardPage() {
                   className="w-20 border rounded-md px-2 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-ring"
                   min={0.25} step={0.25}
                 />
-                <span className="text-xs text-muted-foreground shrink-0">× {baseCalories} kcal</span>
+                <span className="text-xs text-muted-foreground shrink-0">
+                  × {baseCalories} kcal{serving ? ` / ${serving}` : ''}
+                </span>
                 <span className="ml-auto text-sm font-semibold shrink-0">= {foodCal} kcal</span>
               </div>
             ) : (
