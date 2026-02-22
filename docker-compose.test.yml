@@ -1,0 +1,12 @@
+version: '3.9'
+
+# Run backend tests in isolation (SQLite, no postgres needed)
+services:
+  backend-test:
+    build: ./backend
+    working_dir: /app
+    command: pytest --tb=short -v
+    environment:
+      DATABASE_URL: sqlite+aiosqlite:///./test.db
+      JWT_SECRET: test-secret
+      ENV: test

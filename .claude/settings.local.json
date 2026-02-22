@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd /c/Users/inon/working-projects/CaloTrack && docker compose -f docker-compose.test.yml run --rm backend-test 2>&1)",
+      "Bash(cd /c/Users/inon/working-projects/CaloTrack && docker compose -f docker-compose.test.yml build --no-cache backend-test 2>&1 | tail -20 && docker compose -f docker-compose.test.yml run --rm backend-test 2>&1)",
+      "Bash(cd /c/Users/inon/working-projects/CaloTrack && docker compose up --build -d 2>&1)",
+      "Bash(sleep 4 && docker compose -f /c/Users/inon/working-projects/CaloTrack/docker-compose.yml --project-directory /c/Users/inon/working-projects/CaloTrack logs --tail=30 2>&1)",
+      "Bash(cd /c/Users/inon/working-projects/CaloTrack && docker compose exec backend alembic revision --autogenerate -m \"initial\" 2>&1)",
+      "Bash(cd /c/Users/inon/working-projects/CaloTrack && docker compose exec backend alembic upgrade head 2>&1)",
+      "Bash(echo python3 not found, raw::*)",
+      "Bash(docker ps:*)",
+      "Bash(cd /c/Users/inon/working-projects/CaloTrack && docker compose restart frontend 2>&1)",
+      "Bash(cd /c/Users/inon/working-projects/CaloTrack && docker compose restart backend frontend 2>&1 && sleep 4 && docker compose logs backend --tail=10 2>&1)",
+      "Bash(cd:*)",
+      "Bash(head:*)"
+    ]
+  }
+}

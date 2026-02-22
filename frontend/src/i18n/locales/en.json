@@ -1,0 +1,67 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "save": "Save",
+    "cancel": "Cancel",
+    "submit": "Submit"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "loginTitle": "Welcome back",
+    "registerTitle": "Create your account",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?"
+  },
+  "onboarding": {
+    "title": "Set up your profile",
+    "subtitle": "We'll calculate your daily calorie target",
+    "height": "Height (cm)",
+    "weight": "Weight (kg)",
+    "age": "Age",
+    "gender": "Gender",
+    "male": "Male",
+    "female": "Female",
+    "activityLevel": "Activity Level",
+    "sedentary": "Sedentary (desk job, little exercise)",
+    "light": "Light (1-3 days/week)",
+    "moderate": "Moderate (3-5 days/week)",
+    "active": "Active (6-7 days/week)",
+    "goal": "Goal",
+    "lose": "Lose weight",
+    "maintain": "Maintain weight",
+    "gain": "Gain weight",
+    "next": "Calculate my target"
+  },
+  "dashboard": {
+    "title": "Today",
+    "target": "Daily Target",
+    "consumed": "Consumed",
+    "burned": "Burned",
+    "net": "Net",
+    "status": {
+      "deficit": "In Deficit",
+      "maintenance": "Maintenance",
+      "surplus": "Surplus"
+    },
+    "addFood": "Add Food",
+    "addExercise": "Add Exercise",
+    "history": "History"
+  },
+  "food": {
+    "name": "Food name",
+    "calories": "Calories",
+    "type": "Input type",
+    "structured": "Manual entry",
+    "free_text": "Describe it",
+    "image": "Photo",
+    "record": "Upload record"
+  },
+  "history": {
+    "title": "History",
+    "empty": "No history yet"
+  }
+}
