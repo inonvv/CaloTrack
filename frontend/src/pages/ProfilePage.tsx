@@ -934,7 +934,7 @@ function MeasInput({
         onChange={(e) => onChange(e.target.value)}
         placeholder="—"
         min={1}
-        className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+        className="flex-1 border rounded-lg px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
       />
     </div>
   )
