@@ -8,7 +8,7 @@ from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.db.models import User, Profile, DailyLog, FoodEntry, ExerciseEntry
 from app.schemas.daily import (
-    FoodEntryCreate, FoodEntryResponse,
+    FoodEntryCreate, FoodEntryUpdate, FoodEntryResponse,
     ExerciseEntryCreate, ExerciseEntryResponse,
     DailyLogResponse, DailySummary,
 )
@@ -79,6 +79,42 @@ async def add_exercise(
     log.total_burned = round(log.total_burned + calories_burned, 2)
     log.net_calories = round(log.total_consumed - log.total_burned, 2)
     log.status = calculate_status(log.net_calories, profile.daily_target)
+
+    await db.commit()
+    await db.refresh(entry)
+    return entry
+
+
+@router.patch("/food/{entry_id}", response_model=FoodEntryResponse)
+async def update_food(
+    entry_id: int,
+    body: FoodEntryUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    profile = await _require_profile(db, current_user.id)
+
+    result = await db.execute(
+        select(FoodEntry)
+        .join(DailyLog)
+        .where(FoodEntry.id == entry_id, DailyLog.user_id == current_user.id)
+    )
+    entry = result.scalar_one_or_none()
+    if not entry:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Entry not found")
+
+    log_result = await db.execute(select(DailyLog).where(DailyLog.id == entry.daily_log_id))
+    log = log_result.scalar_one()
+
+    old_calories = entry.calories
+
+    if body.name is not None:
+        entry.name = body.name
+    if body.calories is not None:
+        entry.calories = body.calories
+        log.total_consumed = round(log.total_consumed - old_calories + body.calories, 2)
+        log.net_calories = round(log.total_consumed - log.total_burned, 2)
+        log.status = calculate_status(log.net_calories, profile.daily_target)
 
     await db.commit()
     await db.refresh(entry)

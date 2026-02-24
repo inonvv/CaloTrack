@@ -93,6 +93,70 @@ async def test_status_deficit(client):
 
 
 @pytest.mark.asyncio
+async def test_update_food_name_and_calories(client):
+    token = await _setup(client)
+    res = await client.post(
+        "/daily/food",
+        json={"name": "Apple", "calories": 95, "input_type": "structured"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    entry_id = res.json()["id"]
+
+    res = await client.patch(
+        f"/daily/food/{entry_id}",
+        json={"name": "Banana", "calories": 105},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["name"] == "Banana"
+    assert data["calories"] == 105.0
+
+    log = await client.get("/daily", headers={"Authorization": f"Bearer {token}"})
+    assert log.json()["total_consumed"] == 105.0
+
+
+@pytest.mark.asyncio
+async def test_update_food_name_only(client):
+    token = await _setup(client)
+    res = await client.post(
+        "/daily/food",
+        json={"name": "Apple", "calories": 95, "input_type": "structured"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    entry_id = res.json()["id"]
+
+    res = await client.patch(
+        f"/daily/food/{entry_id}",
+        json={"name": "Green apple"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert res.status_code == 200
+    assert res.json()["name"] == "Green apple"
+    assert res.json()["calories"] == 95.0
+
+    log = await client.get("/daily", headers={"Authorization": f"Bearer {token}"})
+    assert log.json()["total_consumed"] == 95.0  # unchanged
+
+
+@pytest.mark.asyncio
+async def test_update_food_not_found(client):
+    token = await _setup(client)
+    res = await client.patch(
+        "/daily/food/9999",
+        json={"name": "Ghost"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert res.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_update_food_requires_auth(client):
+    res = await client.patch("/daily/food/1", json={"name": "Ghost"})
+    assert res.status_code == 403
+
+
+@pytest.mark.asyncio
 async def test_history_returns_logs(client):
     token = await _setup(client)
     await client.get("/daily", headers={"Authorization": f"Bearer {token}"})

@@ -4,7 +4,8 @@
     "error": "Something went wrong",
     "save": "Save",
     "cancel": "Cancel",
-    "submit": "Submit"
+    "submit": "Submit",
+    "back": "Back"
   },
   "auth": {
     "login": "Login",
@@ -26,10 +27,10 @@
     "male": "Male",
     "female": "Female",
     "activityLevel": "Activity Level",
-    "sedentary": "Sedentary (desk job, little exercise)",
-    "light": "Light (1-3 days/week)",
-    "moderate": "Moderate (3-5 days/week)",
-    "active": "Active (6-7 days/week)",
+    "sedentary": "Sedentary — desk job, no exercise",
+    "light": "Light — 1–3 workouts/week",
+    "moderate": "Moderate — 3–5 workouts/week",
+    "active": "Active — 6–7 workouts/week or physical job",
     "goal": "Goal",
     "lose": "Lose weight",
     "maintain": "Maintain weight",
@@ -45,7 +46,10 @@
     "status": {
       "deficit": "In Deficit",
       "maintenance": "Maintenance",
-      "surplus": "Surplus"
+      "surplus": "Surplus",
+      "deficit_initial": "D",
+      "maintenance_initial": "M",
+      "surplus_initial": "S"
     },
     "addFood": "Add Food",
     "addExercise": "Add Exercise",
@@ -62,6 +66,49 @@
   },
   "history": {
     "title": "History",
-    "empty": "No history yet"
+    "empty": "No history yet",
+    "listView": "List",
+    "calendarView": "Calendar"
+  },
+  "profile": {
+    "title": "Profile",
+    "stats": "Your stats",
+    "height": "Height",
+    "weight": "Weight",
+    "age": "Age",
+    "gender": "Gender",
+    "male": "Male",
+    "female": "Female",
+    "activity": "Activity",
+    "goal": "Goal",
+    "goal_lose": "Lose weight",
+    "goal_maintain": "Maintain",
+    "goal_gain": "Gain weight",
+    "target": "Daily target",
+    "changeGoal": "Change goal",
+    "changeGoalSub": "Your daily calorie target updates instantly",
+    "metrics": "Metabolic metrics",
+    "chart": "Calorie trend",
+    "days": "days",
+    "bodyComp": "Body Composition",
+    "bmi": "BMI",
+    "bodyFat": "Body Fat",
+    "lbm": "Lean Mass",
+    "ffmi": "FFMI",
+    "protein": "Protein Target",
+    "hydration": "Hydration",
+    "waist": "Waist (cm)",
+    "neck": "Neck (cm)",
+    "hip": "Hip (cm)",
+    "addMeasurements": "Add measurements",
+    "editMeasurements": "Edit measurements",
+    "measurementsSub": "Enables body fat %, lean mass, FFMI & protein targets",
+    "clearMeasurements": "Clear measurements",
+    "unlockTitle": "Unlock with measurements",
+    "perDay": "/ day",
+    "bmiUnderweight": "Underweight",
+    "bmiNormal": "Normal",
+    "bmiOverweight": "Overweight",
+    "bmiObese": "Obese"
   }
 }
