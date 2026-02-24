@@ -345,7 +345,7 @@ export default function ProfilePage() {
               </p>
               <button
                 onClick={openMeasModal}
-                className="text-xs text-primary hover:underline"
+                className="border border-primary/40 rounded-full px-3 py-1 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
               >
                 {profile.waist_cm != null ? `✏️ ${t('profile.editMeasurements')}` : `＋ ${t('profile.addMeasurements')}`}
               </button>
@@ -358,11 +358,13 @@ export default function ProfilePage() {
                 value={String(profile.bmi)}
                 sub={bmiCategory(profile.bmi, t)}
                 accent={bmiAccent(profile.bmi)}
+                borderColor={bmiBorderColor(profile.bmi)}
               />
               <BioCard
                 label={t('profile.hydration')}
                 value={`${(profile.hydration_ml / 1000).toFixed(1)} L`}
                 sub={t('profile.perDay')}
+                borderColor="border-sky-400"
               />
             </div>
 
@@ -370,29 +372,33 @@ export default function ProfilePage() {
             {profile.body_fat_pct != null ? (
               <div className="space-y-2">
                 <div className="grid grid-cols-3 gap-2">
-                  <BioCard label={t('profile.bodyFat')}  value={`${profile.body_fat_pct}%`}    sub="Navy method" />
-                  <BioCard label={t('profile.lbm')}      value={`${profile.lbm} kg`}           sub="Lean mass" />
-                  <BioCard label={t('profile.ffmi')}     value={String(profile.ffmi)}           sub="Nat. max ~25" />
+                  <BioCard label={t('profile.bodyFat')}  value={`${profile.body_fat_pct}%`}    sub="Navy method"   borderColor="border-primary/50" />
+                  <BioCard label={t('profile.lbm')}      value={`${profile.lbm} kg`}           sub="Lean mass"     borderColor="border-primary/50" />
+                  <BioCard label={t('profile.ffmi')}     value={String(profile.ffmi)}           sub="Nat. max ~25"  borderColor="border-primary/50" />
                 </div>
-                <div className="rounded-xl bg-muted/40 px-3 py-2.5 flex items-center justify-between">
+                <div className="border-l-4 border-primary/40 bg-primary/5 rounded-r-xl px-3 py-2.5 flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">{t('profile.protein')}</span>
                   <span className="text-sm font-bold tabular-nums">
                     {profile.protein_min}–{profile.protein_max} g
                     <span className="text-xs font-normal text-muted-foreground ml-1">{t('profile.perDay')}</span>
                   </span>
                 </div>
-                <button
-                  onClick={() => clearMeasurements.mutate()}
-                  disabled={clearMeasurements.isPending}
-                  className="w-full text-xs text-muted-foreground hover:text-destructive transition-colors py-1"
-                >
-                  {t('profile.clearMeasurements')}
-                </button>
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground text-center py-1">
-                {t('profile.measurementsSub')}
-              </p>
+              <div className="border-2 border-dashed border-muted rounded-xl p-5 text-center space-y-3">
+                <div className="space-y-1">
+                  <p className="text-lg">🔬</p>
+                  <p className="text-sm font-semibold">{t('profile.unlockTitle')}</p>
+                  <p className="text-xs text-muted-foreground">Body Fat · Lean Mass · FFMI</p>
+                  <p className="text-xs text-muted-foreground">Protein Target (g/day)</p>
+                </div>
+                <button
+                  onClick={openMeasModal}
+                  className="bg-primary text-primary-foreground px-4 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity"
+                >
+                  ＋ {t('profile.addMeasurements')}
+                </button>
+              </div>
             )}
           </motion.div>
         )}
@@ -640,6 +646,15 @@ export default function ProfilePage() {
                     {saveMeasurements.isPending ? '…' : t('common.save')}
                   </button>
                 </div>
+                {profile?.waist_cm != null && (
+                  <button
+                    onClick={() => { clearMeasurements.mutate(); setMeasModalOpen(false) }}
+                    disabled={clearMeasurements.isPending}
+                    className="w-full border border-destructive/30 text-destructive text-xs py-2 rounded-xl hover:bg-destructive/10 transition-colors"
+                  >
+                    🗑 {t('profile.clearMeasurements')}
+                  </button>
+                )}
               </div>
             </motion.div>
           </>
@@ -892,12 +907,12 @@ function LegendDot({ color, label }: { color: string; label: string }) {
 }
 
 function BioCard({
-  label, value, sub, accent,
+  label, value, sub, accent, borderColor,
 }: {
-  label: string; value: string; sub: string; accent?: string
+  label: string; value: string; sub: string; accent?: string; borderColor?: string
 }) {
   return (
-    <div className="bg-muted/40 rounded-xl p-3 text-center space-y-0.5">
+    <div className={`bg-muted/40 rounded-xl p-3 text-center space-y-0.5 border-t-[3px] ${borderColor ?? 'border-transparent'}`}>
       <p className="text-[10px] text-muted-foreground leading-tight truncate">{label}</p>
       <p className={`text-lg font-black tabular-nums leading-tight ${accent ?? ''}`}>{value}</p>
       <p className="text-[10px] text-muted-foreground leading-tight">{sub}</p>
@@ -937,4 +952,11 @@ function bmiAccent(bmi: number): string {
   if (bmi < 25)   return 'text-green-600'
   if (bmi < 30)   return 'text-orange-500'
   return 'text-red-500'
+}
+
+function bmiBorderColor(bmi: number): string {
+  if (bmi < 18.5) return 'border-blue-500'
+  if (bmi < 25)   return 'border-green-600'
+  if (bmi < 30)   return 'border-orange-500'
+  return 'border-red-500'
 }
