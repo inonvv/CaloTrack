@@ -10,7 +10,7 @@ ACTIVITY_MULTIPLIERS = {
 GOAL_ADJUSTMENTS = {
     Goal.lose: -500,
     Goal.maintain: 0,
-    Goal.gain: 500,
+    Goal.gain: 300,
 }
 
 
@@ -24,5 +24,10 @@ def calculate_tdee(bmr: float, activity_level: ActivityLevel) -> float:
     return round(bmr * ACTIVITY_MULTIPLIERS[activity_level], 2)
 
 
-def calculate_daily_target(tdee: float, goal: Goal) -> float:
-    return round(tdee + GOAL_ADJUSTMENTS[goal], 2)
+def minimum_calories(gender: Gender) -> int:
+    """NIH/Harvard/Mayo Clinic safe minimum: men ≥ 1500, women ≥ 1200 kcal/day."""
+    return 1500 if gender == Gender.male else 1200
+
+
+def calculate_daily_target(tdee: float, goal: Goal, gender: Gender) -> float:
+    return max(round(tdee + GOAL_ADJUSTMENTS[goal], 2), minimum_calories(gender))

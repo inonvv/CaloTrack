@@ -8,6 +8,7 @@ import LoginPage from '@/pages/LoginPage'
 import RegisterPage from '@/pages/RegisterPage'
 import OnboardingPage from '@/pages/OnboardingPage'
 import DashboardPage from '@/pages/DashboardPage'
+import ProfilePage from '@/pages/ProfilePage'
 
 function AppRoutes() {
   const token = useAuthStore((s) => s.token)
@@ -21,8 +22,8 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/login" element={token ? <Navigate to="/" replace /> : <LoginPage />} />
+      <Route path="/register" element={token ? <Navigate to="/" replace /> : <RegisterPage />} />
       <Route
         path="/onboarding"
         element={token ? <OnboardingPage /> : <Navigate to="/login" replace />}
@@ -30,6 +31,10 @@ function AppRoutes() {
       <Route
         path="/"
         element={token ? <DashboardPage /> : <Navigate to="/login" replace />}
+      />
+      <Route
+        path="/profile"
+        element={token ? <ProfilePage /> : <Navigate to="/login" replace />}
       />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

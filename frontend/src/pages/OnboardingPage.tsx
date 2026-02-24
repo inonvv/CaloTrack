@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
@@ -11,6 +11,11 @@ type Goal = 'lose' | 'maintain' | 'gain'
 export default function OnboardingPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+
+  // If the user already has a profile, skip onboarding and go to dashboard
+  useEffect(() => {
+    api.get('/profile').then(() => navigate('/', { replace: true })).catch(() => {})
+  }, [navigate])
 
   const [form, setForm] = useState({
     height: '',
@@ -39,8 +44,14 @@ export default function OnboardingPage() {
         goal: form.goal,
       })
       navigate('/')
-    } catch {
-      setError(t('common.error'))
+    } catch (err) {
+      const status = (err as { response?: { status?: number } }).response?.status
+      if (status === 409) {
+        // Profile already exists — go straight to dashboard
+        navigate('/', { replace: true })
+      } else {
+        setError(t('common.error'))
+      }
     } finally {
       setLoading(false)
     }

@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -9,6 +10,11 @@ class FoodEntryCreate(BaseModel):
     name: str
     calories: float
     input_type: InputType = InputType.structured
+
+
+class FoodEntryUpdate(BaseModel):
+    name: Optional[str] = None
+    calories: Optional[float] = None
 
 
 class FoodEntryResponse(BaseModel):

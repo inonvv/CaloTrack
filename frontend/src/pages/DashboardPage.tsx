@@ -14,6 +14,7 @@ import { groupedExercises, previewCaloriesBurned } from '@/lib/exerciseDatabase'
 interface Profile {
   weight: number
   daily_target: number
+  min_calories: number
 }
 
 interface FoodEntry { id: number; name: string; calories: number }
@@ -28,6 +29,13 @@ interface DailyLog {
   status: 'deficit' | 'maintenance' | 'surplus'
   food_entries: FoodEntry[]
   exercise_entries: ExerciseEntry[]
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+/** Estimate grams from calories using average food caloric density (~2 kcal/g) */
+function estimateGrams(calories: number): number {
+  return Math.round(calories / 2)
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -66,6 +74,11 @@ export default function DashboardPage() {
 
   const [activeForm, setActiveForm] = useState<ActiveForm>('none')
 
+  // Inline food edit state
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editCal, setEditCal] = useState('')
+
   // ── Queries ──────────────────────────────────────────────────────────────
 
   const { data: profile } = useQuery<Profile>({
@@ -94,6 +107,15 @@ export default function DashboardPage() {
   const deleteFood = useMutation({
     mutationFn: (id: number) => api.delete(`/daily/food/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['daily'] }),
+  })
+
+  const updateFood = useMutation({
+    mutationFn: ({ id, name, calories }: { id: number; name: string; calories: number }) =>
+      api.patch(`/daily/food/${id}`, { name, calories }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['daily'] })
+      setEditingId(null)
+    },
   })
 
   const addExercise = useMutation({
@@ -140,7 +162,11 @@ export default function DashboardPage() {
 
   // ── Guards ────────────────────────────────────────────────────────────────
 
-  if (error) { navigate('/onboarding'); return null }
+  if (error) {
+    const status = (error as { response?: { status?: number } }).response?.status
+    navigate(status === 400 ? '/onboarding' : '/login', { replace: true })
+    return null
+  }
   if (isLoading || !log) {
     return (
       <div className="min-h-screen flex items-center justify-center text-muted-foreground text-sm">
@@ -173,6 +199,13 @@ export default function DashboardPage() {
               {i18n.language === 'he' ? 'EN' : 'עב'}
             </button>
             <button
+              onClick={() => navigate('/profile')}
+              className="text-xs border rounded-lg px-2.5 py-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              aria-label="Profile"
+            >
+              👤
+            </button>
+            <button
               onClick={() => { logout(); navigate('/login') }}
               className="text-xs text-muted-foreground hover:text-foreground border rounded-lg px-2.5 py-1 hover:bg-muted transition-colors"
             >
@@ -180,6 +213,14 @@ export default function DashboardPage() {
             </button>
           </div>
         </div>
+
+        {/* Minimum calorie warning */}
+        {profile && log.net_calories < profile.min_calories && (
+          <div className="flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
+            <span>⚠️</span>
+            <span>Below safe minimum · Eat more to meet your nutritional needs</span>
+          </div>
+        )}
 
         {/* Status card */}
         <motion.div
@@ -232,19 +273,62 @@ export default function DashboardPage() {
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 8 }}
-                    className="flex items-center justify-between px-3 py-2.5 text-sm"
+                    className="px-3 py-2 text-sm"
                   >
-                    <span className="font-medium">{e.name}</span>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-muted-foreground text-xs">{e.calories} kcal</span>
-                      <button
-                        onClick={() => deleteFood.mutate(e.id)}
-                        className="w-5 h-5 rounded-full flex items-center justify-center text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors text-xs"
-                        aria-label="Remove"
-                      >
-                        ✕
-                      </button>
-                    </div>
+                    {editingId === e.id ? (
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          autoFocus
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          className="flex-1 min-w-0 border rounded-md px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                        <input
+                          type="number"
+                          value={editCal}
+                          onChange={(e) => setEditCal(e.target.value)}
+                          className="w-20 border rounded-md px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-ring"
+                          min={1}
+                        />
+                        <span className="text-xs text-muted-foreground shrink-0">kcal</span>
+                        <button
+                          onClick={() => updateFood.mutate({ id: e.id, name: editName, calories: Number(editCal) })}
+                          disabled={updateFood.isPending || !editName || !editCal}
+                          className="w-6 h-6 rounded-full flex items-center justify-center bg-primary text-primary-foreground disabled:opacity-40 text-xs shrink-0"
+                          aria-label="Save"
+                        >
+                          ✓
+                        </button>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="w-6 h-6 rounded-full flex items-center justify-center text-muted-foreground/60 hover:text-foreground hover:bg-muted transition-colors text-xs shrink-0"
+                          aria-label="Cancel"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{e.name}</span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-muted-foreground text-xs">~{estimateGrams(e.calories)}g · {e.calories} kcal</span>
+                          <button
+                            onClick={() => { setEditingId(e.id); setEditName(e.name); setEditCal(String(e.calories)) }}
+                            className="w-5 h-5 rounded-full flex items-center justify-center text-muted-foreground/40 hover:text-foreground hover:bg-muted transition-colors text-xs"
+                            aria-label="Edit"
+                          >
+                            ✎
+                          </button>
+                          <button
+                            onClick={() => deleteFood.mutate(e.id)}
+                            className="w-5 h-5 rounded-full flex items-center justify-center text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors text-xs"
+                            aria-label="Remove"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </motion.li>
                 ))}
               </ul>

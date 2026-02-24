@@ -1,5 +1,6 @@
 from datetime import datetime, date
 from enum import Enum
+from typing import Optional
 
 from sqlalchemy import String, Integer, Float, ForeignKey, Date, DateTime, Enum as SAEnum, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -64,6 +65,9 @@ class Profile(Base):
     bmr: Mapped[float] = mapped_column(Float, nullable=False)
     tdee: Mapped[float] = mapped_column(Float, nullable=False)
     daily_target: Mapped[float] = mapped_column(Float, nullable=False)
+    waist_cm: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    neck_cm: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    hip_cm: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
     user: Mapped["User"] = relationship("User", back_populates="profile")
 
